@@ -235,42 +235,33 @@ if [ "$?" -eq 1 ]; then
             if version_less_than $current_version $latest_version; then
                 echo "latest version $latest_version"
                 echo "current version $current_version"
-                diff=$(get_version_difference $latest_version $current_version)
-                if [ "$diff" -eq 1 ]; then
-                    echo "current validator version:" "$current_version" 
-                    echo "latest validator version:" "$latest_version" 
+                # Pull latest changes
+                # Failed git pull will return a non-zero output
+                if git pull origin $branch; then
+                    # latest_version is newer than current_version, should download and reinstall.
+                    echo "New version published. Updating the local copy."
 
-                    # Pull latest changes
-                    # Failed git pull will return a non-zero output
-                    if git pull origin $branch; then
-                        # latest_version is newer than current_version, should download and reinstall.
-                        echo "New version published. Updating the local copy."
+                    # Install latest changes just in case.
+                    pip install -e .
 
-                        # Install latest changes just in case.
-                        pip install -e .
+                    # # Run the Python script with the arguments using pm2
+                    # TODO (shib): Remove this pm2 del in the next spec version update.
+                    pm2 del auto_run_validator
+                    echo "Restarting PM2 process"
+                    pm2 restart $proc_name
 
-                        # # Run the Python script with the arguments using pm2
-                        # TODO (shib): Remove this pm2 del in the next spec version update.
-                        pm2 del auto_run_validator
-                        echo "Restarting PM2 process"
-                        pm2 restart $proc_name
+                    # Update current version:
+                    current_version=$(read_version_value)
+                    echo ""
 
-                        # Update current version:
-                        current_version=$(read_version_value)
-                        echo ""
-
-                        # Restart autorun script
-                        echo "Restarting script..."
-                        ./$(basename $0) $old_args && exit
-                    else
-                        echo "**Will not update**"
-                        echo "It appears you have made changes on your local copy. Please stash your changes using git stash."
-                    fi
+                    # Restart autorun script
+                    echo "Restarting script..."
+                    ./$(basename $0) $old_args && exit
                 else
-                    # current version is newer than the latest on git. This is likely a local copy, so do nothing. 
                     echo "**Will not update**"
-                    echo "The local version is $diff versions behind. Please manually update to the latest version and re-run this script."
+                    echo "It appears you have made changes on your local copy. Please stash your changes using git stash."
                 fi
+
             else
                 echo "**Skipping update **"
                 echo "$current_version is the same as or more than $latest_version. You are likely running locally."
