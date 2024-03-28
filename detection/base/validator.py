@@ -54,7 +54,7 @@ class BaseValidatorNeuron(BaseNeuron):
         # Set up initial scoring weights for validation
         bt.logging.info("Building validation weights.")
 
-        print("A"*200)
+        print("B"*200)
 
         # Instead of loading zero weights we take latest weights from the previous run
         # If it is first run for validator then it will be filled with zeros
