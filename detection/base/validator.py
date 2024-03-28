@@ -54,6 +54,8 @@ class BaseValidatorNeuron(BaseNeuron):
         # Set up initial scoring weights for validation
         bt.logging.info("Building validation weights.")
 
+        print("A"*200)
+
         # Instead of loading zero weights we take latest weights from the previous run
         # If it is first run for validator then it will be filled with zeros
         self.scores = torch.zeros_like(self.metagraph.S, dtype=torch.float32, device=self.device)
